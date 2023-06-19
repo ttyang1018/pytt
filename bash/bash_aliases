@@ -1,0 +1,11 @@
+alias virenv="python3 -m venv --system-site-packages"
+
+alias conflict="git diff --name-only --diff-filter=U"
+alias amendlastcommit="git add -u && git commit --amend" 
+alias mergelastcommit="git add -u && git commit --amend --no-edit"
+alias deletemergedbranch="git branch --merged master | grep -v "^\* mater" | xargs -n 1 -r git branch -d"
+alias gst="git status"
+alias gdf="git diff"
+alias gl="git log"
+
+alias filenumber="ls -1 | wc -l"
