@@ -10,6 +10,7 @@ import tarfile
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from enum import Enum, auto, unique
 from typing import List, Tuple
+from pathlib import Path
 
 import cv2
 import yaml
@@ -17,6 +18,7 @@ from munch import DefaultMunch
 from PIL import Image
 from pyaml_env import parse_config
 from tqdm import tqdm
+import imagesize
 
 
 class DataFormat:
@@ -49,8 +51,15 @@ def CheckPlatformInfo():
     info = platform.uname()
     return info, system
 
+# def IsImgFile(path):
+    # return re.search(r'\.(jpg|png|jpeg|bmp)$', path, re.IGNORECASE)
+
 def IsImgFile(path):
-    return re.search(r'\.(jpg|png|jpeg|bmp)$', path, re.IGNORECASE)
+    if not os.path.isfile(file_path):
+        raise RuntimeError(
+            "input path is not valid file: {}".format(file_path))
+
+    return bool(file_path.lower().endswith(tuple(DataFormat.IMAGE)))
 
 def IsVideo(file_path):
 
@@ -150,6 +159,9 @@ def ListFilesInDir(file_dir, file_types_list):
     file_dir_list.sort(key=lambda x: os.path.basename(x))
     return file_dir_list
 
+def ListImageFilesInDir(file_dir):
+    return ListFilesInDir(file_dir, DataFormat.IMAGE)
+
 
 def ListFolderInDir(cluster_dir, is_skip_assert=False):
     folder_list = [
@@ -160,6 +172,27 @@ def ListFolderInDir(cluster_dir, is_skip_assert=False):
         assert folder_list != [], "#ERROR: cannot locate any folders within the given root path %s" % cluster_dir
     folder_list.sort(key=lambda x: os.path.basename(x))
     return folder_list
+
+def GetImageFolderProperty(image_folder_dir, img_ext : str, img_size : tuple):
+    image_path_list = ListImageFilesInDir(image_folder_dir)
+    if len(image_path_list) == 0:
+        print(f"Not an image folder: {image_folder_dir}")
+        return False
+
+    first_img_size = imagesize.get(image_path_list[0])
+    first_img_ext = Path(image_path_list[0]).suffix
+
+    for image_path in image_path_list:
+        img_size = imagesize.get(image_path)
+        if img_size != first_img_size:
+            print(f"Inconsistent image size: {image_path}")
+            return False
+        img_ext = Path(image_path).suffix
+        if img_ext != first_img_ext:
+            print(f"Inconsistent image ext: {img_ext}")
+            return False
+
+    return True
 
 
 def GetAbsPathFilesInDir(path, datatype):
